@@ -1,0 +1,1 @@
+# Jamf-Protect-Batch-Delete
