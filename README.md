@@ -18,6 +18,19 @@ The app will require the credentials to access your Jamf Protect Tenant. This in
   - The password for the API client you created
   
 You can fetch a list of computers from your Jamf Protect Ternant based on a last check-in period.
+
+You can import a list of serial numbers. from a csv file. The file just needs a single column of serial numbers.
+
+i.e  
+ZRFN72C5GI  
+ZRFN63C5GJ  
+ZRFN91C5GH
+
 You can then select which computers to delete.
 
-<img width="1014" alt="screen" src="https://user-images.githubusercontent.com/29920386/220759837-3be5d840-9d16-41d9-8f22-da153a09d6ca.png">
+The app does log to Unified Logging. You can view the logs like this:
+
+`log stream --predicate 'subsystem == "co.uk.mallion.jamf-protect-batch-delete"' --level info`
+
+
+<img width="1014" alt="Screenshot2" src="https://user-images.githubusercontent.com/29920386/221022124-c77f8982-2321-4ed9-a019-b788e430929e.png">
