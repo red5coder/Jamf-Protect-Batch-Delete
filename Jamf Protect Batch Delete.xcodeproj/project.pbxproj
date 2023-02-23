@@ -13,6 +13,7 @@
 		FBD0D90029A4C1D8005DEF70 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FBD0D8FF29A4C1D8005DEF70 /* Preview Assets.xcassets */; };
 		FBD0D90829A4C47B005DEF70 /* JamfProtectAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD0D90729A4C47B005DEF70 /* JamfProtectAPI.swift */; };
 		FBD5FD7929A65658000F98D5 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD5FD7829A65658000F98D5 /* Keychain.swift */; };
+		FBD5FD9829A7CFCD000F98D5 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD5FD9729A7CFCD000F98D5 /* Logger.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +25,7 @@
 		FBD0D90129A4C1D8005DEF70 /* Protect_Batch_Delete.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Protect_Batch_Delete.entitlements; sourceTree = "<group>"; };
 		FBD0D90729A4C47B005DEF70 /* JamfProtectAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JamfProtectAPI.swift; sourceTree = "<group>"; };
 		FBD5FD7829A65658000F98D5 /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
+		FBD5FD9729A7CFCD000F98D5 /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,6 +65,7 @@
 				FBD0D90129A4C1D8005DEF70 /* Protect_Batch_Delete.entitlements */,
 				FBD0D8FE29A4C1D8005DEF70 /* Preview Content */,
 				FBD5FD7829A65658000F98D5 /* Keychain.swift */,
+				FBD5FD9729A7CFCD000F98D5 /* Logger.swift */,
 			);
 			path = "Protect Batch Delete";
 			sourceTree = "<group>";
@@ -145,6 +148,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FBD5FD9829A7CFCD000F98D5 /* Logger.swift in Sources */,
 				FBD0D8FB29A4C1D7005DEF70 /* ContentView.swift in Sources */,
 				FBD5FD7929A65658000F98D5 /* Keychain.swift in Sources */,
 				FBD0D8F929A4C1D7005DEF70 /* Protect_Batch_DeleteApp.swift in Sources */,
@@ -276,7 +280,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Protect Batch Delete/Protect_Batch_Delete.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 46;
+				CURRENT_PROJECT_VERSION = 47;
 				DEVELOPMENT_ASSET_PATHS = "\"Protect Batch Delete/Preview Content\"";
 				DEVELOPMENT_TEAM = VR4GB7TBDP;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -288,7 +292,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 0.9;
+				MARKETING_VERSION = 0.9.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "co.uk.mallion.jamf-protect-batch-delete";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -304,7 +308,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Protect Batch Delete/Protect_Batch_Delete.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 46;
+				CURRENT_PROJECT_VERSION = 47;
 				DEVELOPMENT_ASSET_PATHS = "\"Protect Batch Delete/Preview Content\"";
 				DEVELOPMENT_TEAM = VR4GB7TBDP;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -316,7 +320,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 0.9;
+				MARKETING_VERSION = 0.9.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "co.uk.mallion.jamf-protect-batch-delete";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

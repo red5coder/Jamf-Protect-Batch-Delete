@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import AppKit
+import os.log
 
 
 struct ContentView: View {
@@ -35,6 +35,8 @@ struct ContentView: View {
 
     @State private var showingConfirmation = false
 
+    
+    @State private var importedFromCVS = false
 
     var searchResults: [Item] {
         if searchText.isEmpty {
@@ -106,6 +108,7 @@ struct ContentView: View {
                             }
                             updateFetchButton()
                         }
+
                 }
             }
             .padding()
@@ -151,7 +154,7 @@ struct ContentView: View {
                 TableColumn("Hostname", value: \.hostName)
                 TableColumn("Serial", value: \.serial)
                 TableColumn("Checkin", value: \.formatedCheckin)
-
+                TableColumn("Status", value: \.status)
             }
             .padding()
             .onChange(of: sortOrder) { newOrder in
@@ -173,12 +176,25 @@ struct ContentView: View {
                     }
                     .frame(width: 200)
                     
-                    Button("Fetch") {
+                    Button("Clear") {
                         Task {
-                            await getToken()
+                            foundComputers = [Item]()
                         }
                     }
                     .padding()
+
+                    Button("Import CSV") {
+                        Task {
+                           importCSV()
+                        }
+                    }
+
+                    Button("Fetch") {
+                        Task {
+                            await fetchComputersFromProtect()
+                        }
+                    }
+                    .padding([ .leading ])
                     .disabled(fetchButtonDisabled)
 
                     Button("Delete Selected") {
@@ -194,7 +210,11 @@ struct ContentView: View {
                         }
                         Button("Delete All", role: .destructive) {
                             Task {
-                                await deleteSelectedComputers()
+                                if importedFromCVS {
+                                    await deleteCSVComputers()
+                                } else {
+                                    await deleteSelectedComputers()
+                                }
                             }
                         }
 
@@ -223,6 +243,41 @@ struct ContentView: View {
     }
     
     
+    func importCSV() {
+        Logger.protect.info("Import a csv file selected.")
+        importedFromCVS = true
+        deleteButtonDisabled = true
+        foundComputers = [Item]()
+
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.prompt = "Select CSV"
+        panel.message = "Please select a csv file of serial numbers."
+        panel.allowedContentTypes = [ .commaSeparatedText ]
+        if panel.runModal() == .OK {
+            if let csvPath = panel.url {
+                do {
+                    let content = try String(contentsOfFile: csvPath.path)
+                    Logger.protect.info("\(csvPath.path, privacy: .public) was selected.")
+                    let parsedCSV: [String] = content.components(separatedBy: "\n").filter{ !$0.isEmpty }
+                    for serial in parsedCSV {
+                        let item = Item(delete: true, status: "csv", uuid: "", checkin: "", hostName: "", serial: serial.uppercased().replacingOccurrences(of: "\n", with: "") )
+                        foundComputers.append(item)
+                    }
+                    Logger.protect.info("\(foundComputers.count, privacy: .public) computers imported from csv file.")
+                    if foundComputers.count > 0 {
+                        deleteButtonDisabled = false
+                    }
+                } catch {
+                    Logger.protect.error("Could Not read CSV File.")
+                    print("Could Not read CSV File")
+                }
+            }
+        }
+    }
+    
+    
     func updateFetchButton() {
         if protectURL.validURL && !clientID.isEmpty && !password.isEmpty  {
             fetchButtonDisabled = false
@@ -239,8 +294,10 @@ struct ContentView: View {
                 dismissButton: .default(Text("OK"))
                 )
     }
-
-    func deleteSelectedComputers() async {
+    
+    
+    func deleteCSVComputers() async {
+        Logger.protect.info("Delete computers was selected.")
         let jamfProtect = JamfProtectAPI()
         let (authToken, httpRespoonse) = await jamfProtect.getToken(protectURL: protectURL, clientID: clientID, password: password)
         guard let authToken else {
@@ -249,10 +306,72 @@ struct ContentView: View {
             showAlert = true
             return
         }
-        
+        Logger.protect.info("Sucessfully authenticated to Protect.")
         var showError = false
-        var errorCode = 0
-        var itemsToDelete = [String]()
+        
+        var message = "All \(selectedComputerCount) computers where deleted."
+        if selectedComputerCount < 2 {
+           message = "The computer was deleted."
+        }
+        
+        for (index, computer) in foundComputers.enumerated() {
+            if computer.delete {
+                let (computerResult, computerResponse) = await jamfProtect.listComputerBySerial(protectURL: "https://eduservices1.protect.jamfcloud.com" , access_token: authToken.access_token, serial: computer.serial)
+                guard let computerResult = computerResult else { continue }
+                if let computerResponse = computerResponse , computerResponse == 200 , computerResult.data.listComputers.items.count > 0 {
+                    Logger.protect.info("Deleted computer \(computer.serial, privacy: .public).")
+                    foundComputers[index].checkin = computerResult.data.listComputers.items[0].checkin
+                    foundComputers[index].uuid = computerResult.data.listComputers.items[0].uuid
+                    foundComputers[index].hostName = computerResult.data.listComputers.items[0].hostName
+                    foundComputers[index].status = "Found"
+                    if let responseCode = await jamfProtect.deleteComputer(protectURL: protectURL , access_token: authToken.access_token, uuid: foundComputers[index].uuid) {
+                        if responseCode != 200 {
+                            Logger.protect.error("Could not delete computer \(computer.serial, privacy: .public), error \(responseCode).")
+                            foundComputers[index].status = "Error \(responseCode)"
+                            showError = true
+                        } else {
+                            Logger.protect.info("Computer \(computer.serial, privacy: .public) was deleted.")
+                            foundComputers[index].status = "Deleted"
+                        }
+                    }
+                } else {
+                    Logger.protect.error("Could not find computer \(computer.serial, privacy: .public).")
+                    showError = true
+                    foundComputers[index].status = "Error \(computerResponse)"
+                }
+            }
+        }
+        
+        
+        if showError {
+            //Deletion was unsuccessful
+            alertMessage = "Could not Delete one or more computers"
+            alertTitle = "Error"
+            showAlert = true
+        } else {
+            //Deletion was successful
+            alertMessage = message
+            alertTitle = "Successful Deletion"
+            showAlert = true
+            deleteButtonDisabled = true
+        }
+
+
+        
+    }
+
+    func deleteSelectedComputers() async {
+        Logger.protect.info("Delete computers was selected.")
+        let jamfProtect = JamfProtectAPI()
+        let (authToken, httpRespoonse) = await jamfProtect.getToken(protectURL: protectURL, clientID: clientID, password: password)
+        guard let authToken else {
+            alertMessage = "Could not authenticate. Please check the url and authentication details"
+            alertTitle = "Authentication Error"
+            showAlert = true
+            return
+        }
+        Logger.protect.info("Sucessfully authenticated to Protect.")
+        var showError = false
         
         var message = "All \(selectedComputerCount) computers where deleted."
         if selectedComputerCount < 2 {
@@ -262,30 +381,24 @@ struct ContentView: View {
         
         for (index, computer) in foundComputers.enumerated() {
             if computer.delete {
-                if let responseCode = await jamfProtect.deleteComputers(protectURL: protectURL , access_token: authToken.access_token, uuid: computer.uuid) {
+                if let responseCode = await jamfProtect.deleteComputer(protectURL: protectURL , access_token: authToken.access_token, uuid: computer.uuid) {
                     if responseCode != 200 {
+                        Logger.protect.error("Could not delete computer \(computer.serial, privacy: .public), error \(responseCode).")
+                        foundComputers[index].status = "Error \(responseCode)"
                         showError = true
-                        errorCode = responseCode
-                        break
                     } else {
-                        itemsToDelete.append(computer.uuid)
+                        Logger.protect.info("Computer \(computer.serial, privacy: .public) was deleted.")
+                        foundComputers[index].status = "Deleted"
                     }
                 }
             }
         }
         
-        for item in itemsToDelete {
-            if let index = foundComputers.firstIndex(where: { $0.uuid == item } ) {
-                foundComputers.remove(at: index)
-            }
-
-        }
         
         if showError {
             //Deletion was unsuccessful
-            print("*** Error")
-            alertMessage = "Error: \(errorCode)"
-            alertTitle = "Could not Delete one or more computers"
+            alertMessage = "Could not Delete one or more computers"
+            alertTitle = "Error"
             showAlert = true
         } else {
             //Deletion was successful
@@ -306,7 +419,11 @@ struct ContentView: View {
     
     
     
-    func getToken() async {
+    func fetchComputersFromProtect() async {
+        Logger.protect.info("Fetch computers from Protect was selected.")
+        importedFromCVS = false
+        deleteButtonDisabled = true
+
         foundComputers = [Item]()
 
         let jamfProtect = JamfProtectAPI()
@@ -320,7 +437,8 @@ struct ContentView: View {
             return
         }
 
-        
+        Logger.protect.info("Sucessfully authenticated to Protect.")
+
         var days = 7
         switch selectedDays{
             case 0:
@@ -341,6 +459,7 @@ struct ContentView: View {
                 days = 7
         }
         
+        Logger.protect.info("\(days, privacy: .public) days was selected.")
         let past = Calendar.current.date(byAdding: .day, value: -(days), to: Date())!
         let dateformat = ISO8601DateFormatter()
         dateformat.formatOptions.insert(.withFractionalSeconds)
