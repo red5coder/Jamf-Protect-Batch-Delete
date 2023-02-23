@@ -19,7 +19,7 @@ The app will require the credentials to access your Jamf Protect Tenant. This in
   
 You can fetch a list of computers from your Jamf Protect Ternant based on a last check-in period.
 
-You can import a list of serial numbers. from a csv file. The file just needs a single column of serial numbers.
+You can also import a list of serial numbers from a csv file. The file just needs a single column of serial numbers.
 
 i.e  
 ZRFN72C5GI  
