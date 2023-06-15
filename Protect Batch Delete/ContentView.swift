@@ -101,10 +101,6 @@ struct ContentView: View {
                                 DispatchQueue.global(qos: .background).async {
                                     Keychain().save(service: "co.uk.mallion.jamfprotect-batch-delete", account: "password", data: password)
                                 }
-                            } else {
-                                DispatchQueue.global(qos: .background).async {
-                                    Keychain().save(service: "co.uk.mallion.jamfprotect-batch-delete", account: "", data: "")
-                                }
                             }
                             updateFetchButton()
                         }
@@ -125,6 +121,15 @@ struct ContentView: View {
             .onChange(of: savePassword) { newValue in
                 let defaults = UserDefaults.standard
                 defaults.set(savePassword, forKey: "savePassword")
+                if savePassword {
+                    DispatchQueue.global(qos: .background).async {
+                        Keychain().save(service: "co.uk.mallion.jamfprotect-batch-delete", account: "password", data: password)
+                    }
+                } else {
+                    DispatchQueue.global(qos: .background).async {
+                        Keychain().save(service: "co.uk.mallion.jamfprotect-batch-delete", account: "password", data: "")
+                    }
+                }
             }
             
             Table(searchResults, selection: $selection , sortOrder: $sortOrder) {
